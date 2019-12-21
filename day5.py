@@ -105,7 +105,7 @@ class AddOperation(FourIntCode):
 			"data[{}]".format(b.raw) if b.mode == 0 else "i"
 		))
 		data[loc.raw] = a.value + b.value
-		return cls.length()
+		return pos + cls.length()
 
 
 class MulOperation(FourIntCode):
@@ -124,7 +124,7 @@ class MulOperation(FourIntCode):
 			"data[{}]".format(b.raw) if b.mode == 0 else "i"
 		))
 		data[loc.raw] = a.value * b.value
-		return cls.length()
+		return pos + cls.length()
 
 
 class InOperation(TwoIntCode):
@@ -142,7 +142,7 @@ class InOperation(TwoIntCode):
 			val = 0
 		log.debug("IN: data[{}] = {}(i)".format(loc.raw, val))
 		data[loc.raw] = val
-		return cls.length()
+		return pos + cls.length()
 
 
 class OutOperation(TwoIntCode):
@@ -152,10 +152,16 @@ class OutOperation(TwoIntCode):
 
 	@classmethod
 	def _eval(cls, data, pos, *args):
-		loc = args[0]
-		log.debug("OUT: print(data[{}])".format(loc.raw))
-		print(data[loc.raw])
-		return cls.length()
+		a = args[0]
+		log.debug("OUT: {}({})".format(
+			a.value,
+			"data[{}]".format(a.raw) if a.mode == 0 else "i"
+		))
+		if a.mode == 0:
+			print(data[a.raw])
+		else:
+			print(a.value)
+		return pos + cls.length()
 
 
 class JumpIfTrueOperation(ThreeIntCode):
@@ -172,7 +178,7 @@ class JumpIfTrueOperation(ThreeIntCode):
 			jmp.value if a.value != 0 else cls.length(),
 			"data[{}]".format(jmp.raw) if jmp.mode == 0 and a.value != 0 else "i"
 		))
-		return jmp.value if a.value != 0 else cls.length()
+		return jmp.value if a.value != 0 else pos + cls.length()
 
 
 class JumpIfFalseOperation(ThreeIntCode):
@@ -189,7 +195,7 @@ class JumpIfFalseOperation(ThreeIntCode):
 			jmp.value if a.value == 0 else cls.length(),
 			"data[{}]".format(jmp.raw) if jmp.mode == 0 and a.value == 0 else "i"
 		))
-		return jmp.value if a.value == 0 else cls.length()
+		return jmp.value if a.value == 0 else pos + cls.length()
 
 
 class LessThanOperation(FourIntCode):
@@ -208,7 +214,7 @@ class LessThanOperation(FourIntCode):
 			"data[{}]".format(b.raw) if b.mode == 0 else "i"
 		))
 		data[loc.raw] = 1 if a.value < b.value else 0
-		return cls.length()
+		return pos + cls.length()
 
 
 class EqualsOperation(FourIntCode):
@@ -227,7 +233,7 @@ class EqualsOperation(FourIntCode):
 			"data[{}]".format(b.raw) if b.mode == 0 else "i"
 		))
 		data[loc.raw] = 1 if a.value == b.value else 0
-		return cls.length()
+		return pos + cls.length()
 
 
 class IntCode(object):
@@ -258,7 +264,7 @@ class IntCode(object):
 		log.debug("IP: {}; INST {}: {}".format(self._pos, len(self._inst_buf), inst))
 		self._inst_buf.append(inst)
 		self._state_buf.append((copy.deepcopy(self._state), self._pos))
-		self._pos += op.eval((self._state, self._pos))
+		self._pos = op.eval((self._state, self._pos))
 		
 	def step_backward(self):
 		if len(self._state_buf) > 0:
