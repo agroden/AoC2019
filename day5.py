@@ -32,11 +32,10 @@ class IntCodeOperation(abc.ABC):
 	def eval(cls, state):
 		data, pos = state
 		opm = data[pos]
-		op = opm % 100
+		#op = opm % 100
 		f = (opm // 100) % 10
 		s = (opm // 1000) % 10
 		t = opm // 10000
-		#log.debug("op: {}; modes: first: {}, second: {}, third: {}".format(op, f, s, t))
 		args = []
 		for mode, arg in zip([f, s ,t], data[pos+1:pos+cls.length()]):
 			if mode == 0: # position
@@ -332,7 +331,11 @@ def main():
 	parser.add_argument("-s", "--step", default=False, action="store_true")
 	args = parser.parse_args()
 	if args.debug:
-		logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+		logging.basicConfig(
+			format="[%(levelname)s %(filename)s:(%(lineno)d)] %(message)s",
+			level=logging.DEBUG,
+			stream=sys.stdout
+		)
 	if args.path:
 		with open(args.path, "r") as f:
 			args.input = f.read()
@@ -340,6 +343,11 @@ def main():
 	evaluator = IntCode(data)
 	
 	if args.step:
+		logging.basicConfig(
+			format="[%(levelname)s %(filename)s:(%(lineno)d)] %(message)s",
+			level=logging.DEBUG,
+			stream=sys.stdout
+		)
 		evaluator.debug()
 	else:
 		evaluator.eval()
